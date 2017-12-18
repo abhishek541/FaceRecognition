@@ -6,8 +6,8 @@ import numpy as np
 class FaceRecognition:
     rows = 195
     cols = 231
-    T0 = 7345724145782
-    T1 = 90000000
+    T0 = 6500000000000
+    T1 = 89000000
 
     def __init__(self):
         pass
@@ -42,11 +42,11 @@ class FaceRecognition:
 
     def train_eigen_faces(self):
         train_files = listdir('train')
-        self.A = np.zeros(shape=(self.rows * self.cols, len(train_files)), dtype='int16')
+        self.A = np.zeros(shape=(self.rows * self.cols, len(train_files)), dtype='int64')
         print(str(train_files))
         for i in range(0, len(train_files)):
             img = Image.open('train/' + train_files[i])
-            img_arr = np.array(img, dtype='int16').flatten()
+            img_arr = np.array(img, dtype='int64').flatten()
             self.A[:, i] = img_arr[:]
 
         self.mean_face = np.floor_divide(np.sum(self.A, axis=1) ,len(train_files))
@@ -59,9 +59,13 @@ class FaceRecognition:
         for k in range(0, self.eigen_faces.shape[1]):
             self.save_image(self.eigen_faces[:, k], 'output/eigen_face'+str(k)+'.png', (self.rows, self.cols))
 
-        self.train_proj = np.dot(self.eigen_faces.transpose(), self.A)
-        print('$$$$$$$$$$$$$$$$$ ' + str(self.train_proj))
-        print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+        train_projections = []
+        for l in range(0, len(train_files)):
+            projection = np.dot(self.eigen_faces.transpose(), self.A[:, l])
+            print('Projection for training image ' + str(l) + ' is: ' + str(projection))
+            train_projections.append(projection)
+        self.train_proj = np.array(train_projections)
+        print('---------------End of training------------------')
 
     def predict_image(self, test_img, n):
         diff_test = self.diff_mean_face(test_img)
@@ -83,7 +87,7 @@ class FaceRecognition:
             print("Not a face image")
         else:
             if min(dist_test_train) < self.T1:
-                print("Face recognised with training image " + str(dist_test_train.index(min(dist_test_train))))
+                print("Face recognised with training image " + str(dist_test_train.index(min(dist_test_train))+1))
             else:
                 print("Face not recognised")
         print("===================================================")
@@ -92,11 +96,11 @@ def test():
     fr = FaceRecognition()
     fr.train_eigen_faces()
     test_files = listdir('test')
-    # for i in range(len(test_files)):
-    #     print("File is: " + test_files[i])
-    #     img = Image.open('test/' + test_files[i])
-    #     img_arr = np.array(img, dtype='float64').flatten()
-    #     fr.predict_image(img_arr, i)
+    for i in range(len(test_files)):
+        print("File is: " + test_files[i])
+        img = Image.open('test/' + test_files[i])
+        img_arr = np.array(img, dtype='int64').flatten()
+        fr.predict_image(img_arr, i)
 
 if __name__ == "__main__":
     test()
