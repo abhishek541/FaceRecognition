@@ -1,7 +1,17 @@
 from PIL import Image
-from math import sqrt
 from os import listdir
 import numpy as np
+
+"""
+
+A Python class that implements the Eigenfaces algorithm
+for face recognition, using eigenvalues and
+principle component analysis. A model is trained
+with some images and then it is used to predict if
+given image is a face image and if it matches with any
+of the training images
+
+"""
 
 class FaceRecognition:
     rows = 195
@@ -9,21 +19,36 @@ class FaceRecognition:
     T0 = 6500000000000
     T1 = 89000000
 
+    """
+    Initializing the class
+    """
     def __init__(self):
         pass
 
+    """
+    Calculate difference between given image and mean face
+    """
     def diff_mean_face(self, img):
         img -= self.mean_face[:]
         return img
 
+    """
+    Returns the projection of image on the face space
+    """
     def compute_projection(self, img):
         proj_face = np.dot(self.eigen_faces.transpose(), img)
         return proj_face
 
+    """
+    Returns reconstructed image from eigen faces
+    """
     def reconstruct_image(self, omega):
         img_proj = np.dot(self.eigen_faces, omega)
         return img_proj
 
+    """
+    Get face space from training images
+    """
     def get_face_space(self):
         A_transpose = np.transpose(self.A)
         L = np.dot(A_transpose, self.A)
@@ -31,15 +56,26 @@ class FaceRecognition:
         U = np.dot(self.A, eig_vec)
         return U
 
+    """
+    Calculate Euclidean distance between 2 arrays
+    """
     def get_euclidean_distance(self, arr1, arr2):
         dist_arr = np.linalg.norm(np.subtract(arr1, arr2))
         return dist_arr
 
+    """
+    Save data as image to the specified path
+    """
     def save_image(self, imgdata, filepath, size):
         im = Image.new('L', size)
         im.putdata(imgdata)
         im.save(filepath)
 
+    """
+    Get all the images from train directory
+    Calculate the mean face and subtract from each image
+    Get eigen faces and projection on face space
+    """
     def train_eigen_faces(self):
         train_files = listdir('train')
         self.A = np.zeros(shape=(self.rows * self.cols, len(train_files)), dtype='int64')
@@ -67,6 +103,10 @@ class FaceRecognition:
         self.train_proj = np.array(train_projections)
         print('---------------End of training------------------')
 
+    """
+    For each image, predict if it is a face image
+    Predict if the face matches with any of the training images
+    """
     def predict_image(self, test_img, n):
         diff_test = self.diff_mean_face(test_img)
         self.save_image(diff_test, 'output/test_diff'+str(n)+'.png', (self.rows, self.cols))
@@ -92,6 +132,9 @@ class FaceRecognition:
                 print("Face not recognised")
         print("===================================================")
 
+"""
+Method to call the FaceRecognition class for training and prediction
+"""
 def test():
     fr = FaceRecognition()
     fr.train_eigen_faces()
